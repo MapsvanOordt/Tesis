@@ -1,0 +1,172 @@
+---
+title: "Asignación Presupuestal"
+author: "Maria Pia van Oordt"
+date: "2022-10-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#EJECUCIÓN PRESUPUESTAL  
+
+Uno de los desafíos de este proyecto de investigación es lograr estimar o asignar la cantidad de pliegos presupuestales a nivel distrital ya que algunos de estos ,en la base de datos, solo tienen información respecto al departamento y/o provincia en la que estos fueron ejecutados, pero no para que distritos fueron destinados. Sin embargo, para este trabajo se necesita saber el monto devengado que fue destinado a cada distrito en miras a la lucha contra el Covid-19. El trabajo que se requiere para asignar estos montos a cada distrito del Perú es extenso y se tendrán que hacer algunos supuestos sin perder rigurosidad.  Sin embargo, al terminar de tener los montos asignados, el indicador de eficiencia que se creará nos permitirá tener información procesada con respecto a cada distrito.
+
+ Dentro de la base de datos de Ejecución presupuestal para la lucha contra el coronavirus hay 338,225 pliegos presupuestales ejecutados. Estos todos fueron destinados a la actividad Prevención, control. Tratamiento y diagnóstico del Coronavirus. Asimismo, de todos estos pliegos, 211,385 fueron destinados a la función salud; para esta investigación estos son los pliegos relevantes. Cada uno de estos es ejecutado por un nivel de gobierno distinto y por ende la asignación de los montos a cada distrito varía dependiendo del nivel de gobierno que ejecutó el mismo. En este sentido, a continuación se explicará cómo se asignan los montos devengados para cada distrito dependiendo de si el monto fue ejecutado por el Gobierno nacional o por los gobiernos regionales o locales.
+
+
+```{r include=FALSE}
+library(tidyverse)
+library(dplyr)
+df_2020 = read.csv("pcm_covid_2020.csv")
+df_2021 = read.csv("pcm_covid_2021.csv")
+df_2021 = rename(df_2021, TIPO_GOBIERNO_NOMBRE = NIVEL_GOBIERNO_NOMBRE,TIPO_GOBIERNO = NIVEL_GOBIERNO )
+df = bind_rows(df_2020,df_2021)
+#str(df) # 338225 obs y 64 variables
+na.omit(df)
+
+#elegimos solo la función salud
+
+df2 <- 
+  df %>% 
+  filter(FUNCION_NOMBRE == "SALUD")
+
+#Creamos el ubigeo
+
+df2$DEPARTAMENTO_EJECUTORA=as.factor(df2$DEPARTAMENTO_EJECUTORA)
+df2$PROVINCIA_EJECUTORA=as.factor(df2$PROVINCIA_EJECUTORA)
+df2$DISTRITO_EJECUTORA=as.factor(df2$DISTRITO_EJECUTORA)
+df2$DISTRITO_EJECUTORA = sprintf("%02d",(df2$DISTRITO_EJECUTORA))
+df2$PROVINCIA_EJECUTORA = sprintf("%02d",(df2$PROVINCIA_EJECUTORA))
+df2$DEPARTAMENTO_EJECUTORA = sprintf("%02d",(df2$DEPARTAMENTO_EJECUTORA))
+library(tidyverse)
+df2 <- unite(df2, UBIGEO, DEPARTAMENTO_EJECUTORA, PROVINCIA_EJECUTORA, DISTRITO_EJECUTORA, sep= "") 
+#Añadimos los ceros a la fecha
+df2$MES_EJE = sprintf("%02d",(df2$MES_EJE))
+
+```
+#Separación de la data en 3 partes:
+Se realizo la separación de la data según los niveles de gobierno que ejecutaron los gastos. En este sentido se obtuvo 3 grupos; uno de los pliegos presupuestales que ejecutó el gobierno nacional, otro del regional y otro del local.  
+```{r}
+df_nacional <-
+df2 %>% 
+  filter(TIPO_GOBIERNO_NOMBRE == "GOBIERNO NACIONAL")
+
+df_local <-
+df2 %>% 
+  filter(TIPO_GOBIERNO_NOMBRE == "GOBIERNOS LOCALES")
+
+df_regional <-
+df2 %>% 
+  filter(TIPO_GOBIERNO_NOMBRE == "GOBIERNOS REGIONALES")
+
+```
+
+#Gobiernos nacionales
+
+Entre el año 2020 y 2021, el gobierno nacional ejecutó 34,938 pliegos presupuestales destinados a la función salud para luchar contra el coronavirus. Estos se dividen en dos partes, aquellos con producto y aquellos sin producto. Aquellos pliegos presupuestales con productos son aquellos que se ejecutan para la compra de bienes y/o materiales mientras que los de sin producto se refieren a los demás gastos como por ejemplo el pago de empleados.
+
+```{r}
+dim(df_nacional)
+```
+
+#ASIGNACIÓN DE GASTOS NACIONALES CON PRODUCTO
+
+Por un lado, aquellos que tienen producto fueron 1,796; es decir, el 5,29 % de los pliegos presupuestales ejecutados por el gobierno nacional para la lucha contra el Covid-19 y para la función salud tuvieron un producto resultante de su ejecución.
+
+```{r}
+df_nacional_cp <-
+df_nacional %>%
+  select(UBIGEO,PRODUCTO_PROYECTO_NOMBRE,PRODUCTO_PROYECTO_NOMBRE) %>% 
+  filter(PRODUCTO_PROYECTO_NOMBRE != "SIN PRODUCTO") 
+  dim(df_nacional_cp)
+```
+
+Para poder asignar estos pliegos presupuestales se tomará en cuenta la variable PRODUCTO_PROYECTO_NOMBRE que indica el distrito final del producto obtenido por la ejecución del pliego presupuestal. En este sentido, los pliegos presupuestales ejecutados por el gobierno nacional destinados a la lucha contra el Covid-19 y a la función salud que tienen un producto, serán asignados al distrito en donde se encuentra este mismo producto. 
+
+Por ejemplo, el gobierno nacional ejecutó 90,385 nuevos soles de gasto capital a través de la Administración Central del MINSA para combatir el Covid-19 para la función salud. Es, decir, la unidad ejecutora (Administración general del MINSA) ejecutó este monto en Lima; sin embargo, su producto es especificado de la siguiente forma en la base de datos: ADQUISICION DE MONITOR DE FUNCIONES VITALES, VENTILADOR MECANICO, VENTILADOR DE TRANSPORTE Y DESFIBRILADOR; ADEMAS DE OTROS ACTIVOS EN EL(LA) EESS HOSPITAL REGIONAL GUILLERMO DIAZ DE LA VEGA - ABANCAY DISTRITO DE ABANCAY, PROVINCIA ABANCAY, DEPARTAMENTO APURIMAC. En este sentido, los 90,385 nuevos soles serían asignados al distrito de Abancay dentro de la provincia y departamento de Apurímac ya que fueron destinados a este distrito pero ejecutados en Lima. 
+```{r}
+df_nacional %>% 
+  select(ANO_EJE,MES_EJE,PRODUCTO_PROYECTO_NOMBRE,PRODUCTO_PROYECTO,TIPO_GOBIERNO_NOMBRE,MONTO_DEVENGADO) %>% 
+  filter(PRODUCTO_PROYECTO_NOMBRE=="ADQUISICION DE MONITOR DE FUNCIONES VITALES, VENTILADOR MECANICO, VENTILADOR DE TRANSPORTE Y DESFIBRILADOR; ADEMAS DE OTROS ACTIVOS EN EL(LA) EESS HOSPITAL REGIONAL GUILLERMO DIAZ DE LA VEGA - ABANCAY DISTRITO DE ABANCAY, PROVINCIA ABANCAY, DEPARTAMENTO APURIMAC",MONTO_DEVENGADO ==90385)
+```
+
+
+Cada producto tiene un codigo dependiendo de en que distrito se realizó, entonces todos los gastos que tengan el mismo código de producto son realizados en el mismo distrito. En ese sentido, se construira una relación de codigos de proyecto con su ubigeo respectivo y luego se realizara un merge one to many con la base de df_nacional.El dataframe se exportara en excel y se realizará la asignación de forma manual. De forma posterior se importará a R-studio para el merge one to many.
+
+
+```{r}
+library(haven)
+library(tidyverse)
+library(readxl)
+df_nacional$PRODUCTO_PROYECTO=as.factor(df_nacional$PRODUCTO_PROYECTO)
+df_nacional_cp <-
+df_nacional %>% 
+  select(PRODUCTO_PROYECTO,PRODUCTO_PROYECTO_NOMBRE,UBIGEO) %>% 
+  filter(PRODUCTO_PROYECTO_NOMBRE != "SIN PRODUCTO") %>% 
+  group_by(PRODUCTO_PROYECTO) %>%
+  count(PRODUCTO_PROYECTO_NOMBRE) %>% 
+  arrange(PRODUCTO_PROYECTO)
+dim(df_nacional_cp)
+#write_xlsx("df_nacional_cp")
+```
+```{r}
+  df_nacional_cp %>% head(10)
+
+```
+
+#ASIGNACIÓN DE GASTOS NACIONALES SIN PRODUCTO
+
+Por el otro lado, aquellos que no tienen producto serán asignados entre los distritos del departamento o provincia al que fueron destinados. Esto está indicado en la variable DEPARTAMENTO_META la cual indica el destino de los recursos ejecutados . En otras palabras, todos los gastos ejecutados por el gobierno nacional para lucha el Covid-19 y para la función salud que no tengan un producto serán asignados entre los distritos del departamento al que fueron destinados de forma proporcional a la demografía de cada distrito. 
+
+Para esto se realizará un agrupamiento de los pliegos presupuestales según el departamento al que fueron destinados para cada mes y año. En este sentido, se obtiene el Monto devengado destinado a cada departamento por cada mes de cada año. 
+
+```{r message=FALSE, warning=FALSE}
+df_nacional_sp <-
+df_nacional %>% 
+  select(PRODUCTO_PROYECTO,PRODUCTO_PROYECTO_NOMBRE,UBIGEO,DEPARTAMENTO_META_NOMBRE,MONTO_DEVENGADO,MES_EJE,ANO_EJE) %>% 
+  filter(PRODUCTO_PROYECTO_NOMBRE == "SIN PRODUCTO") %>% 
+  group_by(DEPARTAMENTO_META_NOMBRE,MES_EJE,ANO_EJE, .drop = FALSE) %>%
+  summarise(MONTO_DEVENGADO=sum(MONTO_DEVENGADO)) %>%
+  arrange(DEPARTAMENTO_META_NOMBRE)
+df_nacional_sp %>% head(30)
+
+```
+
+Se exportará la data en excel y se realizara la asignación de forma manual mediante el uso de formulas. Se utilizará los ubigeos de los distritos de cada departamento junto con la cantidad de población de cada distrito para calcular el porcentaje y el ratio. De forma posterior, se multiplicará el Monto devengado ejecutado ese mes y año para ese departamento por su ratio para asi distribuir el monto devengado de forma proporcional a la población del distrito. Para coroborar que la asignación se ha realizado correctamente se importará la data a R studio nuevamente y se volvera a agrupar según el departamento_meta, mes y año. Se compararán los montos obtenidos en el agrupamiento del principio y con este último para ver que coicidan. Asimismo, todos los ubigeos deben tener 24 montos devengados distintos ya que estos corresponden a los 12 meses de cada año.
+
+```{r}
+library(writexl)
+df_nacional_sp %>% 
+write_xlsx("df_nacional_sp.xlsx")
+```
+
+Ejemplo de asignación:
+
+Se tienen 84 distritos distintos en Amazonas. Para este ejemplo se utilizará el distrio de Bagua Grande. Este distrito tiene 54,033 habitantes de los 425,832 habitantes del departamento Amazonas. En este sentido, Bagua grande tiene el 12,69 % de la población total del departamento Amazonas. 
+
+```{r}
+df_nacional_sp %>% 
+  filter(DEPARTAMENTO_META_NOMBRE == "AMAZONAS", MONTO_DEVENGADO == 80111.6)
+```
+En este caso el ratio seria la cantidad de habitantes en Bagua entre la cantidad de habitantes totales del departameto. 
+```{r}
+54033/425832
+```
+
+En este sentido, el monto devengado que le corresponde a este distrito en el mes de febrero del año 2021 es la multiplicación del monto devengado de mes de febrero del año 2021 destinado al departamento de Amazonas y el ratio poblacional de Bagua. El monto devengado correspondiente seria 10,165.21 nuevos soles. Una vez terminado este proceso que se realizara en excel mediante el uso de tablas con formulas , se importara la base de datos a R-sudio y se realizará un full_join con la data final.
+```{r}
+54033/425832*80111.6
+```
+
+Este es el mismo proceso para los gobiernos regionales.
+
+#Gobiernos regionales
+Entre el año 2020 y 2021, los gobiernos regionales ejecutaron 121,729 pliegos presupuestales destinados a la función salud para luchar contra el coronavirus. Estos se dividen en dos partes, aquellos con producto y aquellos sin producto.  
+
+Por un lado, aquellos que tienen producto fueron 6,865; es decir, el 5,63 % de los pliegos presupuestales ejecutados por los gobiernos regionales para la lucha contra el Covid-19 y para la función salud tuvieron un producto. 
+
+#Gobiernos Locales
+Entre el año 2020 y 2021, los gobiernos locales ejecutaron 54,718 pliegos presupuestales destinados a la función salud para luchar contra el coronavirus. En el caso de los gobiernos locales, cada pliego ejecutado fue destinado al distrito al cual pertenece el gobierno local. En este sentido, los  54,718 pliegos presupuestales ejecutados por los gobiernos locales para luchar contra el coronavirus y para la función salud serán asignados al distrito en donde fueron ejecutados.
+

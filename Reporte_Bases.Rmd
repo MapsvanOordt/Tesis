@@ -1,0 +1,345 @@
+---
+title: "Reporte_Bases"
+author: "Maria Pia van Oordt"
+date: "2022-09-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**CONTAGIOS**
+```{r include=FALSE}
+library(rio)
+covid_contagios=import("positivos_covid-copia.csv")
+na.omit(covid_contagios)
+```
+Esta base de datos tiene 9 variables.
+
+Esta base de datos fue descargada del siguiente link: https://www.datosabiertos.gob.pe/dataset/casos-positivos-por-covid-19-ministerio-de-salud-minsa , se actualiza de forma diaria y la unidad de análisis es cada caso positico de covid-19 confirmado por cualqueir tipo de prueba. Es decir, cada observación es una persona contagiada.
+
+En total entre el año 2020 y el año 2021 se tuvieron 3384545 contagiados en todo el Perú
+```{r}
+dim(covid_contagios)
+```
+
+```{r}
+names(covid_contagios)
+```
+*Tiene* información de 1851 distritos
+```{r}
+covid_contagios$UBIGEO=as.factor(covid_contagios$UBIGEO)
+str(covid_contagios$UBIGEO)
+```
+Formateo las variable que usaré
+```{r}
+library(tidyverse)
+
+covid_contagios<- 
+  covid_contagios %>% 
+  mutate(UBIGEO = as.character(UBIGEO)) %>%
+  mutate(FECHA_RESULTADO = as.character(FECHA_RESULTADO)) %>% 
+  mutate(DEPARTAMENTO = as.character(DEPARTAMENTO)) %>% 
+  mutate(DISTRITO = as.character(DISTRITO)) %>% 
+  mutate(PROVINCIA = as.character(PROVINCIA)) 
+```
+
+Creamos variable de Año y mes
+
+```{r}
+
+pacman::p_load(tidyverse)
+covid_contagios_year_mes <-
+  covid_contagios %>% 
+  mutate( 
+    FECHA_RESULTADO=as.character(FECHA_RESULTADO),
+    year= str_sub(FECHA_RESULTADO, start = 1, end = 4),
+    mes=str_sub(FECHA_RESULTADO, start = 5, end = 6),
+    )
+
+```
+
+Selecciono solo los años 2020 y 2021 y las variables que me interesan
+```{r include=FALSE}
+covid_contagios_20_21 <-
+  covid_contagios_year_mes %>% 
+  filter( year != 2022) %>% 
+  select(DEPARTAMENTO, PROVINCIA, DISTRITO, UBIGEO, year, mes)
+na.omit(covid_contagios_20_21)
+```
+*Podemos* ver que en el departamento de Lima hubieron más contagios que en los demás durante el año 2020 y 2021 siguiendole Piura.
+```{r}
+table(covid_contagios_20_21$DEPARTAMENTO,covid_contagios_20_21$year)
+  
+```
+
+**FALLECIDOS**
+Esta base se datos fue descargada del siguiente link : https://www.datosabiertos.gob.pe/dataset/fallecidos-por-covid-19-ministerio-de-salud-minsa
+Contiene 6 variables y 207312 observaciones.
+La unidad de análisis de esta base de datos es cada persona fallecida a causa del covid-19.
+```{r}
+covid_fallecidos=import("fallecidos_covid-copia.csv")
+names(covid_fallecidos)
+```
+```{r}
+dim(covid_fallecidos)
+```
+*Formateo* las variables que usaré
+```{r}
+covid_fallecidos<- 
+  covid_fallecidos %>% 
+  mutate(UBIGEO = as.character(UBIGEO)) %>%
+  mutate(FECHA_FALLECIMIENTO = as.character(FECHA_FALLECIMIENTO)) %>% 
+  mutate(DEPARTAMENTO = as.character(DEPARTAMENTO)) %>% 
+  mutate(DISTRITO = as.character(DISTRITO)) %>% 
+  mutate(PROVINCIA = as.character(PROVINCIA)) 
+```
+
+Creamos la variable año y mes
+
+```{r}
+pacman::p_load(tidyverse)
+covid_fallecidos_year_mes <-
+  covid_fallecidos %>% 
+  mutate( 
+    FECHA_FALLECIMIENTO=as.character(FECHA_FALLECIMIENTO),
+    year= str_sub(FECHA_FALLECIMIENTO, start = 1, end = 4),
+    mes=str_sub(FECHA_FALLECIMIENTO, start = 5, end = 6),
+    )
+
+covid_fallecidos_year_mes<- 
+  covid_fallecidos_year_mes
+```
+
+Selecciono solo los años 2020 y 2021 y las variables que me interesan
+
+```{r}
+covid_fallecidos_20_21 <-
+  covid_fallecidos_year_mes %>% 
+  filter( year != 2022) %>% 
+  select(DEPARTAMENTO, PROVINCIA, DISTRITO, UBIGEO, year, mes )
+```
+
+*Podemos* ver que en Lima hubieron la mayor cantidad de fallecidos a casua del covid_19
+```{r}
+table(covid_fallecidos_20_21$DEPARTAMENTO,covid_fallecidos_20_21$year)
+```
+
+**VACUNADOS**
+
+Esta base de datos fue descargada del siguiente link : https://www.datosabiertos.gob.pe/dataset/vacunaci%C3%B3n-contra-covid-19-ministerio-de-salud-minsa
+
+Es actualizada de forma diaria y su unidad de análisis es cada persona vacunada ya sea con 1 , 2 o 3 dosis.
+
+
+```{r}
+library(readr)
+vacunas_covid_copia <- read_csv("vacunas_covid-copia.csv")
+```
+
+*Se puede ver* que esta base de datos tiene información de 1706 distritos
+```{r}
+vacunas_covid_copia$DISTRITO=as.factor(vacunas_covid_copia$DISTRITO)
+str(vacunas_covid_copia$DISTRITO)
+```
+
+*Desde* el año 2020 al año 2021 hay 56598068 personas vacunadas
+
+```{r}
+dim(vacunas_covid_copia)
+```
+```{r}
+names(vacunas_covid_copia)
+```
+*Vemos* la estructura de todas las variables de la base de datos
+
+
+```{r}
+
+library(tidyverse)
+vacunas_covid_copia<- 
+  vacunas_covid_copia %>% 
+  mutate(FECHA_VACUNACION = as.character(FECHA_VACUNACION)) %>% 
+  mutate(DEPARTAMENTO = as.character(DEPARTAMENTO)) %>% 
+  mutate(DISTRITO = as.character(DISTRITO)) %>% 
+  mutate(PROVINCIA = as.character(PROVINCIA))
+
+str(vacunas_covid_copia)
+```
+
+*Configuración* de fechas ya que estan formateadas de esta forma : dd/mm/aa.
+
+```{r}
+pacman::p_load(tidyverse)
+covid_vacunados_year_mes <-
+  vacunas_covid_copia %>% 
+  mutate( 
+    FECHA_VACUNACION=as.character(FECHA_VACUNACION),
+    year= str_sub(FECHA_VACUNACION, start = 1, end = 4),
+    mes=str_sub(FECHA_VACUNACION, start = 5, end = 6),
+    )
+
+```
+
+*Selecciono* solo los años 2020 y 2021 y las variables que me interesan
+
+Las variables relevantes para este proyecto son las siguientes:
+
+FECHA_VACUNACION: Fecha de vacunación
+
+DEPARTAMENTO: Departamento del establecimiento de salud donde se aplico la vacuna.
+
+PROVINCIA: Provincia del establecimiento de salud donde se aplicó la vacuna.
+
+DISTRITO: Distrito del establecimiento de salud donde se aplicó la vacuna 
+
+```{r}
+covid_vacunados <-
+  covid_vacunados_year_mes %>% 
+  filter( year != 2022) %>% 
+  select(DEPARTAMENTO, PROVINCIA, DISTRITO, year, mes)
+```
+
+Podemos ver que en el 2020 solo se vacunaron 1779 personas en Lima y en los demás departamentos no.
+
+```{r}
+table(covid_vacunados$year,covid_vacunados$DEPARTAMENTO)
+```
+
+
+*UBIGEOS*
+Esta base de datos contiene el ubigeo del INEI el cual es que se usará para esta investigación. Asimismo tenemos el nombre del departamento, provincia y distrito. Se tiene información de *1885* distritos.
+```{r}
+library(readxl)
+ubigeos_v1 <- read_excel("ubigeos_v1.xlsx")
+```
+
+```{r}
+names(ubigeos_v1)
+```
+```{r}
+str(ubigeos_v1$UBIGEO)
+```
+**Presupuesto Ejecutado**
+
+Esta base de datos fue descargada del siguiente link : https://www.datosabiertos.gob.pe/dataset/ejecuci%C3%B3n-presupuestal-covid-19-ministerio-de-econom%C3%ADa-y-finanzas-mef
+
+
+En esta base de datos encontramos el conjunto de datos publicados por el MEF(ministerio de Economia y finanzas) que corresponde a la Información del Presupuesto Institucional Modificado (PIM), y la ejecución de gasto en las fases de Compromiso, Devengado y Girado correspondiente a las Unidades Ejecutoras (UEs) del Gobierno Nacional, los Gobiernos Regionales y las Municipalidades de los Gobiernos Locales, sobre la distribución y ejecución de los recursos públicos para la lucha contra el COVID-19. Es decir, la ejecución presupuestal realizada por los tres niveles de gobierno destinado a la lucha contra el Covid-19 durante el periodo de la Pandemia del 2020 al 2022. Esta base de datos se actualiza de forma diaria y tiene información sobre 900 distritos lo cual es nuestra unidad de análisis. Esta base nos brinda información sobre los recursos asignados a distintas entidades en los tres niveles de gobierno lo cual permite hacer una comparación a nivel distrital para monitorear el avance de la ejecución del gasto y realizar un indice de eficiencia. Dentro de ella hay  diversas variables relevantes para esta investigación y para la construcción de la variable dependiente. El conjunto de datos corresponde a un subconjunto de datos de la consulta amigable de Gasto disponible en el Portal de Transparencia Economica del MEF.
+
+Importamos la data de Ejecución presupuestal para la lucha contra el Covid-19 de los años 2020,2021.
+
+
+```{r}
+library(rio)
+EJECUCIONPRESUPUESTAL_COVID_20=import("pcm_covid_2020.csv")
+EJECUCIONPRESUPUESTAL_COVID_21=import("pcm_covid_2021.csv")
+
+```
+
+
+Sobre el diccionario de Datos:
+
+En esta base de datos se encuentra la variable "TIPO_GOBIERNO" que tiene 3 categorias; E=Gobierno Nacional, R=Gobierno Regional, M=Gobierno Local. 
+
+Asimismo, en esta se encuentra la variable "DEPARTAMENTO_EJECUTORA" en donde se encuentra el código del departamento en el cual se ubica la unidad ejecutora y/o pliegos; tambien se encuentra la variable "PROVINCIA_EJECUTORA" en la cual se encuentra el código de la provincia en la cual se ubica la unidad ejecutora y/o Pliegos; por último esta la variable "DISTRITO_EJECUTORA" en la cual se identifica el código del distrito en el cual se ubica la unidad ejecutora y/o Pliego. 
+
+Las visualizamos 
+
+
+
+Agregamos los ceros correspondientes para que código del ubigeo este completo
+
+```{r}
+EJECUCIONPRESUPUESTAL_COVID_20$DISTRITO_EJECUTORA = sprintf("%02d",(EJECUCIONPRESUPUESTAL_COVID_20$DISTRITO_EJECUTORA))
+EJECUCIONPRESUPUESTAL_COVID_20$PROVINCIA_EJECUTORA = sprintf("%02d",(EJECUCIONPRESUPUESTAL_COVID_20$PROVINCIA_EJECUTORA))
+EJECUCIONPRESUPUESTAL_COVID_20$DEPARTAMENTO_EJECUTORA = sprintf("%02d",(EJECUCIONPRESUPUESTAL_COVID_20$DEPARTAMENTO_EJECUTORA))
+
+EJECUCIONPRESUPUESTAL_COVID_21$DISTRITO_EJECUTORA = sprintf("%02d",(EJECUCIONPRESUPUESTAL_COVID_21$DISTRITO_EJECUTORA))
+EJECUCIONPRESUPUESTAL_COVID_21$PROVINCIA_EJECUTORA = sprintf("%02d",(EJECUCIONPRESUPUESTAL_COVID_21$PROVINCIA_EJECUTORA))
+EJECUCIONPRESUPUESTAL_COVID_21$DEPARTAMENTO_EJECUTORA = sprintf("%02d",(EJECUCIONPRESUPUESTAL_COVID_21$DEPARTAMENTO_EJECUTORA))
+
+```
+
+Las formateamos como variables categóricas para que no se considere como un número sino como un codigo.
+
+```{r}
+EJECUCIONPRESUPUESTAL_COVID_21$DEPARTAMENTO_EJECUTORA=as.factor(EJECUCIONPRESUPUESTAL_COVID_21$DEPARTAMENTO_EJECUTORA)
+EJECUCIONPRESUPUESTAL_COVID_21$PROVINCIA_EJECUTORA=as.factor(EJECUCIONPRESUPUESTAL_COVID_21$PROVINCIA_EJECUTORA)
+EJECUCIONPRESUPUESTAL_COVID_21$DISTRITO_EJECUTORA=as.factor(EJECUCIONPRESUPUESTAL_COVID_21$DISTRITO_EJECUTORA)
+
+
+EJECUCIONPRESUPUESTAL_COVID_20$DEPARTAMENTO_EJECUTORA=as.factor(EJECUCIONPRESUPUESTAL_COVID_20$DEPARTAMENTO_EJECUTORA)
+EJECUCIONPRESUPUESTAL_COVID_20$PROVINCIA_EJECUTORA=as.factor(EJECUCIONPRESUPUESTAL_COVID_20$PROVINCIA_EJECUTORA)
+EJECUCIONPRESUPUESTAL_COVID_20$DISTRITO_EJECUTORA=as.factor(EJECUCIONPRESUPUESTAL_COVID_20$DISTRITO_EJECUTORA)
+```
+
+
+
+Para poder identificar en que distrito se realiza cada gasto, se creará una variable que una estas tres variables y asi tener el ubigeo correspondinte al distrito en donde se ejecuta el gasto.
+
+```{r}
+library(tidyverse)
+EJECUCIONPRESUPUESTAL_COVID_21 <- unite(EJECUCIONPRESUPUESTAL_COVID_21, UBIGEO, DEPARTAMENTO_EJECUTORA, PROVINCIA_EJECUTORA, DISTRITO_EJECUTORA, sep= "") 
+
+EJECUCIONPRESUPUESTAL_COVID_20 <- unite(EJECUCIONPRESUPUESTAL_COVID_20, UBIGEO, DEPARTAMENTO_EJECUTORA, PROVINCIA_EJECUTORA, DISTRITO_EJECUTORA, sep= "") 
+
+```
+
+```{r}
+EJECUCIONPRESUPUESTAL_COVID_20$UBIGEO=as.factor(EJECUCIONPRESUPUESTAL_COVID_20$UBIGEO)
+str(EJECUCIONPRESUPUESTAL_COVID_20$UBIGEO)
+```
+```{r}
+EJECUCIONPRESUPUESTAL_COVID_21$UBIGEO=as.factor(EJECUCIONPRESUPUESTAL_COVID_21$UBIGEO)
+str(EJECUCIONPRESUPUESTAL_COVID_21$UBIGEO)
+```
+
+
+Unimos ambas bases de datos
+
+```{r}
+EJECUCIONPRESUPUESTAL_COVID=full_join(EJECUCIONPRESUPUESTAL_COVID_21,EJECUCIONPRESUPUESTAL_COVID_20)
+```
+
+Se han seleccionado las siguientes variables para seleccionar aquellos gastos que influyen en los outputs seleccionados: Vacunados, fallecidos y contagiados.
+
+```{r, eval=TRUE, echo=FALSE, out.width='70%', fig.align='center'}
+knitr::include_graphics("seleccionadas_diccionario.png")
+```
+											
+
+```{r}
+EJECUCIONPRESUPUESTAL_COVID$EJECUTORA_NOMBRE=as.factor(EJECUCIONPRESUPUESTAL_COVID$EJECUTORA_NOMBRE)
+EJECUCIONPRESUPUESTAL_COVID$PRODUCTO_PROYECTO_NOMBRE=as.factor(EJECUCIONPRESUPUESTAL_COVID$PRODUCTO_PROYECTO_NOMBRE)
+EJECUCIONPRESUPUESTAL_COVID$META_NOMBRE=as.factor(EJECUCIONPRESUPUESTAL_COVID$META_NOMBRE)
+EJECUCIONPRESUPUESTAL_COVID$RUBRO_NOMBRE=as.factor(EJECUCIONPRESUPUESTAL_COVID$RUBRO_NOMBRE)
+EJECUCIONPRESUPUESTAL_COVID$RUBRO_NOMBRE=as.factor(EJECUCIONPRESUPUESTAL_COVID$RUBRO_NOMBRE)
+EJECUCIONPRESUPUESTAL_COVID$SECTOR_NOMBRE=as.factor(EJECUCIONPRESUPUESTAL_COVID$SECTOR_NOMBRE)
+EJECUCIONPRESUPUESTAL_COVID$FUNCION_NOMBRE=as.factor(EJECUCIONPRESUPUESTAL_COVID$FUNCION_NOMBRE)
+EJECUCIONPRESUPUESTAL_COVID$UBIGEO=as.factor(EJECUCIONPRESUPUESTAL_COVID$UBIGEO)
+
+```
+
+Se seleccionará solo la función Salud
+```{r}
+levels(EJECUCIONPRESUPUESTAL_COVID$FUNCION_NOMBRE)
+
+```
+
+
+Debido a que nuestro output (vacunados, fallecidos y contagiados) esta directamente relacionado al sector salud, seleccionamos solo los gastos destinados a la función salud. Con ello, seleccionamos 104964 gastos de los 172916 realizados para combatir la pandemia durante los años 2020 y 2021. Asimismo, selecciono las variables que me interesan según lo expuesto anteriormente en el diccionario. 
+```{r}
+EJECUCIONPRESUPUESTAL_COVID_SALUD <- 
+  EJECUCIONPRESUPUESTAL_COVID %>% 
+  filter(FUNCION_NOMBRE == "SALUD") %>% 
+  select(UBIGEO,SEC_EJEC,EJECUTORA,EJECUTORA_NOMBRE,PRODUCTO_PROYECTO,PRODUCTO_PROYECTO_NOMBRE,META_NOMBRE,RUBRO,RUBRO_NOMBRE,TIPO_RECURSO,TIPO_RECURSO_NOMBRE,MONTO_PIA,MONTO_PIM,MONTO_CERTIFICADO,MONTO_COMPROMETIDO_ANUAL,MONTO_COMPROMETIDO,MONTO_DEVENGADO,MONTO_GIRADO,FUNCION_NOMBRE,SECTOR,SECTOR_NOMBRE)
+```
+
+Tenemos 105114 gastos de la función salud ejecutados en 901 distritos 
+```{r}
+EJECUCIONPRESUPUESTAL_COVID_SALUD$UBIGEO=as.factor(EJECUCIONPRESUPUESTAL_COVID_SALUD$UBIGEO)
+str(EJECUCIONPRESUPUESTAL_COVID_SALUD$UBIGEO)
+```
+
