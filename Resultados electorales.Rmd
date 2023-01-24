@@ -1,0 +1,35 @@
+---
+title: "Resultados_electorales"
+author: "Maria Pia van Oordt"
+date: "2023-01-23"
+output: html_document
+---
+Elecciones congresales del año 2020
+```{r}
+ECE2020_Resultados_Congresal <- read_excel("ECE2020_Resultados_Congresal.xlsx")
+
+```
+
+Elecciones congresales del año 2016
+```{r}
+EG2016_Resultados_Congresal <- read_excel("EG2016_Resultados_Congresal.xlsx")
+
+```
+
+Elecciones presidenciales del 2016
+```{r}
+EG2016_2V_Resultados_Presidencial <- read_excel("EG2016-2V_Resultados_Presidencial.xlsx")
+```
+
+Esta es la base de datos a nivel distrital de las elecciones municipales distritales 
+```{r}
+ERM2018_Resultados_Distrital <- read_excel("ERM2018_Resultados_Distrital.xlsx")
+
+```
+
+Esta e sla base de datos a nivel provincial de las eleciones municipales provinciales
+```{r}
+ERM2018_Resultados_Provincial <- read_excel("ERM2018_Resultados_Provincial.xlsx")
+View(ERM2018_Resultados_Provincial)
+```
+

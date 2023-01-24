@@ -1,0 +1,56 @@
+---
+title: "Fallecidos_gen"
+author: "Maria Pia van Oordt"
+date: "2023-01-23"
+output: html_document
+---
+
+```{r}
+fallecidos_sinadef <- read_csv("fallecidos_sinadef.csv")
+```
+
+```{r}
+pacman::p_load(tidyverse)
+fallecidos_sinadef_ <-
+  fallecidos_sinadef %>% 
+  mutate( 
+    year= str_sub(FECHA, start = 1, end = 4),
+    mes=str_sub(FECHA, start = 6, end = 7),
+    )
+```
+
+```{r}
+fallecidos_anual = fallecidos_sinadef_ %>% group_by(year) %>% summarise(count = n()) %>% print()
+
+```
+```{r}
+merge5 %>% group_by(year) %>% summarise(fallecidos=sum(fallecidos)) %>% print()
+```
+
+En el año 2020 el 41,47 % de los fallecidos fue por covid-19
+```{r}
+(93905/226401)*100
+```
+En el año 2021 el43.76%  de los fallecidos fue por covid-19 
+
+```{r}
+(108753/248316)*100
+```
+En el año 2019 habian 32131400 habitantes en Perú. La tasa de mortalidad del año 2019 fue de 0.35
+
+```{r}
+
+(114873/32131400)*100
+
+```
+En el año 2020 habian 32.625.948 habitantes en el Perú. La tasa de mortalidad del año 2020 fue de 0.69
+```{r}
+(226401/32625948)*100
+```
+En el año 2021 habian 33359416 habitantes. La tasa de mortalidad del año 2021 fue de 0.74
+```{r}
+(248316/33359416)*100
+```
+
+
+
