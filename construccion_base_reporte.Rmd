@@ -1,0 +1,45 @@
+---
+title: "construccion_base_reporte"
+author: "Maria Pia van Oordt"
+date: "2023-01-23"
+output: html_document
+---
+
+Para realizar este reporte, se analizara a nivel distrito por año. Es decir se descartara la variable mensual.
+```{r}
+merge5 = merge4 %>% group_by(distrito,departamento,provincia,year) %>% summarise(
+  monto_devengado=sum(monto_devengado),
+  poblacion_total=sum(poblacion_total),
+  vacuandos=sum(vacuandos),
+  contagiados=sum(contagiados),
+  fallecidos=sum(fallecidos))
+
+#Creamos las tasas
+
+merge5=merge5 %>% 
+  mutate(tasa_fallecidos =  (fallecidos/poblacion_total)*100) %>%
+  mutate(tasa_contagiados =  (contagiados/poblacion_total)*100) %>% 
+  mutate(tasa_vacuandos =  (vacuandos/poblacion_total)*100)
+merge5=merge5 %>% 
+  mutate(tasa_fallecidos= sprintf(tasa_fallecidos, fmt = '%#.2f')) 
+merge5=merge5 %>% 
+  mutate(tasa_vacuandos= sprintf(tasa_vacuandos, fmt = '%#.2f'))
+merge5=merge5 %>% 
+  mutate(tasa_contagiados= sprintf(tasa_contagiados, fmt = '%#.2f'))
+
+#Guardamos la data 
+
+merge5$tasa_contagiados=as.numeric(merge5$tasa_contagiados)
+merge5$tasa_vacuandos=as.numeric(merge5$tasa_vacuandos)
+merge5$tasa_fallecidos=as.numeric(merge5$tasa_fallecidos)
+
+
+write_csv(merge5, path = "merge5.csv")
+
+library(writexl)
+merge5 %>% 
+write_xlsx("merge5.xlsx")
+
+```
+
+
